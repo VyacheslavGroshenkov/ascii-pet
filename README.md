@@ -26,8 +26,8 @@
 </p>
 
 **A tiny pet for your Mac's desktop.** It sits in the corner of your screen and plays ASCII art: a spinning
-donut, a galaxy, a sleeping cat, a cat girl who waves back. Now and then it hops. Click it for the next
-trick, or hold it to carry it somewhere else.
+donut, a galaxy, a sleeping cat, a cat girl who waves back. Click it and it hops to the next
+trick; hold it to carry it somewhere else.
 
 Native Swift, no Electron: about 20 MB of memory and 1–4% of one core for most animations.
 
@@ -35,10 +35,11 @@ Native Swift, no Electron: about 20 MB of memory and 1–4% of one core for most
 
 - **11 animations,** each in its own colour gradient: ten from [ascii.rest](https://ascii.rest) and a cat girl
   drawn for this project.
-- **Feels alive.** It crouches, hops, squashes on landing and swaps animation in mid-air.
+- **Feels alive.** Click it and it crouches, hops, squashes on landing and swaps animation in mid-air.
+  Turn on **Hop Around** and it also hops on its own now and then.
 - **Never in your way.** Carry it anywhere, another display included. Clicks pass through its transparent area,
   and it has no Dock icon.
-- **Easy on your Mac.** It pauses while the screen sleeps and doesn't hop on its own when Reduce Motion is on.
+- **Easy on your Mac.** It pauses while the screen sleeps and never hops on its own when Reduce Motion is on.
   [Measurements](#performance) are below.
 
 ## Install

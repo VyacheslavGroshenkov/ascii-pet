@@ -53,7 +53,8 @@ struct Settings {
             "size": PetSize.medium.rawValue,
             "backdrop": Backdrop.clear.rawValue,
             "cycle": Cycle.m1.rawValue,
-            "hops": true,
+            // Сам не прыгает: прыжки раз в несколько секунд отвлекают; включаются в меню.
+            "hops": false,
         ])
     }
 

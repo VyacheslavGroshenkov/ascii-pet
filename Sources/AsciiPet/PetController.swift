@@ -184,10 +184,13 @@ final class PetController: NSObject {
 
         if hop == nil, !pressed {
             let cycle = settings.cycle
+            // Сам прыгает, только если прыжки включены и не включено «Уменьшить движение»; по клику — всегда.
+            let hopsOnOwn = settings.hops && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
             if cycle != .off, now - shownSince >= Double(cycle.rawValue) {
-                jump(swapTo: (pieceIndex + 1) % Pieces.all.count)
-            } else if settings.hops, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion, now >= nextIdleHopAt {
-                // При «Уменьшить движение» сам не прыгает; по клику — по-прежнему.
+                // Автосмена без прыжков — плавной сменой на месте.
+                let next = (pieceIndex + 1) % Pieces.all.count
+                if hopsOnOwn { jump(swapTo: next) } else { swap(to: next) }
+            } else if hopsOnOwn, now >= nextIdleHopAt {
                 // Иногда — двойной прыжок.
                 extraHops = Double.random(in: 0..<1) < 0.3 ? 1 : 0
                 jump()
