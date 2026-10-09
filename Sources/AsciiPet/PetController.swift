@@ -36,7 +36,22 @@ final class PetController: NSObject {
     private var hop: Hop?
     private var extraHops = 0
     private var nextIdleHopAt: CFTimeInterval = 0
-    private var pressed = false
+
+    /// Мышь: нажали на питомца — `pressed`; подержали или потянули — подняли и несут (`carried`),
+    /// `offset` — от курсора до точки, за которую питомец стоит.
+    private enum Grab {
+        case none
+        case pressed(at: CFTimeInterval, from: CGPoint)
+        case carried(offset: CGPoint)
+    }
+    private var grab = Grab.none
+    private var pressed: Bool { if case .none = grab { false } else { true } }
+    private static let holdTime = 0.3
+    private static let dragSlop: CGFloat = 4
+
+    /// Точка пола под правым краем питомца в координатах экрана: по ней раскладывается окно,
+    /// за неё питомца переносят, её и запоминают.
+    private var anchor = CGPoint.zero
 
     /// Анимации рассчитаны на 15–30 к/с; в миниатюре 20 не отличить от 30, а процессора уходит на треть меньше.
     private static let maxFps = 20.0
@@ -51,7 +66,7 @@ final class PetController: NSObject {
         guard frameCost > 0 else { return baseFps }
         return min(baseFps, max(Self.jsBudget / frameCost, Self.minFps))
     }
-    private var bodyState: (y: CGFloat, sx: CGFloat, sy: CGFloat) = (0, 1, 1)
+    private var bodyState: (y: CGFloat, sx: CGFloat, sy: CGFloat, tilt: CGFloat) = (0, 1, 1, 0)
 
     private var timer: Timer?
     private var tickRate: Double = 0
@@ -71,6 +86,7 @@ final class PetController: NSObject {
 
         window.contentView = view
         view.onPress = { [weak self] in self?.press() }
+        view.onDrag = { [weak self] in self?.drag() }
         view.onRelease = { [weak self] inside in self?.release(inside: inside) }
         view.onMenu = { [weak self] event in self?.showContextMenu(event) }
         view.hitTest = { [weak self] point in self?.bodyContains(point) ?? false }
@@ -97,7 +113,9 @@ final class PetController: NSObject {
 
         let center = NotificationCenter.default
         center.addObserver(self, selector: #selector(screensChanged), name: NSApplication.didChangeScreenParametersNotification, object: nil)
-        center.addObserver(self, selector: #selector(screensChanged), name: NSWindow.didChangeBackingPropertiesNotification, object: window)
+        // Смена плотности пикселей (окно перенесли на другой монитор) — только резкость слоёв, без перекладки:
+        // иначе питомец посреди переноса отпрыгнул бы на сохранённое место.
+        center.addObserver(self, selector: #selector(backingChanged), name: NSWindow.didChangeBackingPropertiesNotification, object: window)
         center.addObserver(self, selector: #selector(visibilityChanged), name: NSWindow.didChangeOcclusionStateNotification, object: window)
         let workspace = NSWorkspace.shared.notificationCenter
         workspace.addObserver(self, selector: #selector(screensSlept), name: NSWorkspace.screensDidSleepNotification, object: nil)
@@ -151,10 +169,9 @@ final class PetController: NSObject {
     @objc private func tick() {
         let now = CACurrentMediaTime()
         // mouseUp мог уйти другому окну — не залипаем в «нажатом» состоянии на 60 Гц.
-        if pressed, NSEvent.pressedMouseButtons & 1 == 0 {
-            pressed = false
-            updateTickRate()
-        }
+        if pressed, NSEvent.pressedMouseButtons & 1 == 0 { release(inside: false) }
+        // Подержали, не двигая, — поднимаем: дальше его можно нести.
+        if case .pressed(let at, _) = grab, now - at >= Self.holdTime { pickUp() }
         updateMousePassthrough()
 
         if now >= nextFrameAt {
@@ -207,7 +224,12 @@ final class PetController: NSObject {
 
     private func stepHop(_ now: CFTimeInterval) {
         guard var hop else {
-            applyBody(y: 0, sx: pressed ? 1.07 : 1, sy: pressed ? 0.9 : 1)
+            switch grab {
+            case .none: applyBody(y: 0, sx: 1, sy: 1)
+            case .pressed: applyBody(y: 0, sx: 1.07, sy: 0.9)
+            // Подняли: чуть над полом, крупнее и покачивается, как в руке.
+            case .carried: applyBody(y: 7, sx: 1.05, sy: 1.05, tilt: CGFloat(sin(now * 9)) * 0.06)
+            }
             return
         }
         let air = airTime(hop.height)
@@ -252,13 +274,14 @@ final class PetController: NSObject {
         applyBody(y: y, sx: sx, sy: sy)
     }
 
-    private func applyBody(y: CGFloat, sx: CGFloat, sy: CGFloat) {
+    private func applyBody(y: CGFloat, sx: CGFloat, sy: CGFloat, tilt: CGFloat = 0) {
         // В покое значения не меняются — не коммитим транзакцию Core Animation на каждом тике.
-        guard (y, sx, sy) != bodyState else { return }
-        bodyState = (y, sx, sy)
+        guard (y, sx, sy, tilt) != bodyState else { return }
+        bodyState = (y, sx, sy, tilt)
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        body.transform = CATransform3DScale(CATransform3DMakeTranslation(0, y, 0), sx, sy, 1)
+        let lifted = CATransform3DRotate(CATransform3DMakeTranslation(0, y, 0), tilt, 0, 0, 1)
+        body.transform = CATransform3DScale(lifted, sx, sy, 1)
         // Тень на полу сжимается и бледнеет, когда питомец в воздухе.
         let lift = maxHop > 0 ? min(y / maxHop, 1) : 0
         floorShadow.transform = CATransform3DMakeScale((1 - 0.45 * lift) * sx, 1 - 0.3 * lift, 1)
@@ -288,17 +311,46 @@ final class PetController: NSObject {
     }
 
     private func press() {
-        guard hop == nil else { return }
-        pressed = true
+        // Схватить можно и в прыжке: прыжок обрывается, а обещанная им смена анимации — нет.
+        if let target = hop?.swapTo { swap(to: target) }
+        hop = nil
+        extraHops = 0
+        grab = .pressed(at: CACurrentMediaTime(), from: NSEvent.mouseLocation)
         updateTickRate()
     }
 
+    private func drag() {
+        let mouse = NSEvent.mouseLocation
+        switch grab {
+        case .none:
+            break
+        case .pressed(_, let from):
+            // Потянули, не дожидаясь удержания, — тоже поднимаем.
+            if hypot(mouse.x - from.x, mouse.y - from.y) > Self.dragSlop { pickUp() }
+        case .carried(let offset):
+            anchor = clamped(CGPoint(x: mouse.x - offset.x, y: mouse.y - offset.y))
+            placeWindow()
+        }
+    }
+
+    private func pickUp() {
+        let mouse = NSEvent.mouseLocation
+        grab = .carried(offset: CGPoint(x: mouse.x - anchor.x, y: mouse.y - anchor.y))
+    }
+
+    /// Короткий клик меняет анимацию; если питомца несли — он встаёт на новое место и его запоминаем.
     private func release(inside: Bool) {
-        guard pressed else { return }
-        pressed = false
-        if inside {
-            next()
-        } else {
+        switch grab {
+        case .none:
+            return
+        case .pressed:
+            grab = .none
+            if inside { next() } else { updateTickRate() }
+        case .carried:
+            grab = .none
+            settings.anchor = anchor
+            // Плюх: сразу последняя фаза прыжка — приземление.
+            hop = Hop(start: CACurrentMediaTime() - crouch - airTime(maxHop), height: maxHop, swapTo: nil)
             updateTickRate()
         }
     }
@@ -306,17 +358,44 @@ final class PetController: NSObject {
     // MARK: - Окно и оформление
 
     private func layoutWindow() {
-        guard let screen = NSScreen.screens.first else { return }
         let size = NSSize(width: box + pad * 2, height: floorY + box + maxHop + pad * 2)
-        let area = screen.visibleFrame
-        let origin = NSPoint(x: area.maxX - size.width - 4, y: area.minY + 2)
-        window.setFrame(NSRect(origin: origin, size: size), display: false)
+        anchor = clamped(settings.anchor ?? cornerAnchor())
+        window.setFrame(NSRect(origin: windowOrigin(size), size: size), display: false)
         view.frame = NSRect(origin: .zero, size: size)
+        backingChanged()
+        layoutBody()
+    }
+
+    @objc private func backingChanged() {
         let scale = window.backingScaleFactor
         for layer in [view.layer!, floorShadow, body, bubble, glow, ink, art] {
             layer.contentsScale = scale
         }
-        layoutBody()
+        art.setNeedsDisplay()
+    }
+
+    private func placeWindow() {
+        window.setFrameOrigin(windowOrigin(window.frame.size))
+    }
+
+    /// Правый край тела питомца — на `anchor.x`, пол — на `anchor.y` (см. layoutBody).
+    private func windowOrigin(_ size: NSSize) -> NSPoint {
+        NSPoint(x: anchor.x + pad - size.width, y: anchor.y - floorY)
+    }
+
+    /// Правый нижний угол основного экрана — место по умолчанию.
+    private func cornerAnchor() -> CGPoint {
+        guard let area = NSScreen.screens.first?.visibleFrame else { return .zero }
+        return CGPoint(x: area.maxX - 4 - pad, y: area.minY + 2 + floorY)
+    }
+
+    /// Питомец целиком в видимой области экрана, на котором стоит: не под Dock и не за краем.
+    /// Если такого экрана больше нет (отключили монитор) — на основном.
+    private func clamped(_ p: CGPoint) -> CGPoint {
+        let screen = NSScreen.screens.first { $0.frame.contains(p) } ?? NSScreen.screens.first
+        guard let area = screen?.visibleFrame else { return p }
+        return CGPoint(x: min(max(p.x, area.minX + box), area.maxX),
+                       y: min(max(p.y, area.minY), area.maxY - box))
     }
 
     /// Ячейка вдвое выше своей ширины (как у символа) — так задуманы все анимации ascii.rest.
@@ -441,6 +520,10 @@ final class PetController: NSObject {
             sizes.addItem(item(size.title, #selector(pickSize(_:)), tag: size.rawValue, on: size == settings.size))
         }
         menu.addItem(submenu("Размер", sizes))
+        let corner = item("Вернуть в угол", #selector(backToCorner))
+        // Переставить — зажать питомца мышью и перенести; вернуть можно отсюда.
+        corner.isEnabled = settings.anchor != nil
+        menu.addItem(corner)
 
         let backdrops = NSMenu()
         for (i, backdrop) in Backdrop.allCases.enumerated() {
@@ -474,7 +557,7 @@ final class PetController: NSObject {
     }
 
     private func showContextMenu(_ event: NSEvent) {
-        pressed = false
+        grab = .none
         let menu = NSMenu()
         populate(menu)
         NSMenu.popUpContextMenu(menu, with: event, for: view)
@@ -504,6 +587,11 @@ final class PetController: NSObject {
     @objc private func pickBackdrop(_ sender: NSMenuItem) {
         settings.backdrop = Backdrop.allCases[sender.tag]
         applyBackdrop()
+    }
+
+    @objc private func backToCorner() {
+        settings.anchor = nil
+        layoutWindow()
     }
 
     @objc private func toggleHops() {

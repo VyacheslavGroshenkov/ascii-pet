@@ -23,6 +23,7 @@ final class PetWindow: NSPanel {
 /// Хост слоёв питомца; мышь отдаёт контроллеру.
 final class PetView: NSView {
     var onPress: (() -> Void)?
+    var onDrag: (() -> Void)?
     var onRelease: ((_ inside: Bool) -> Void)?
     var onMenu: ((NSEvent) -> Void)?
     var hitTest: ((NSPoint) -> Bool)?
@@ -41,6 +42,11 @@ final class PetView: NSView {
     override func mouseDown(with event: NSEvent) {
         if event.modifierFlags.contains(.control) { onMenu?(event); return }
         onPress?()
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        if event.modifierFlags.contains(.control) { return }
+        onDrag?()
     }
 
     override func mouseUp(with event: NSEvent) {

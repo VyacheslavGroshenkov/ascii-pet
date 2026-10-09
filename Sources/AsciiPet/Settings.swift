@@ -81,4 +81,16 @@ struct Settings {
         get { defaults.bool(forKey: "hops") }
         nonmutating set { defaults.set(newValue, forKey: "hops") }
     }
+
+    /// Куда питомца переставили: точка пола под его правым краем, в координатах экрана.
+    /// nil — правый нижний угол основного экрана.
+    var anchor: CGPoint? {
+        get {
+            guard let xy = defaults.array(forKey: "anchor") as? [Double], xy.count == 2 else { return nil }
+            return CGPoint(x: xy[0], y: xy[1])
+        }
+        nonmutating set {
+            if let p = newValue { defaults.set([Double(p.x), Double(p.y)], forKey: "anchor") } else { defaults.removeObject(forKey: "anchor") }
+        }
+    }
 }

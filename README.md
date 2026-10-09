@@ -29,9 +29,11 @@ and plays animated ASCII art from [ascii.rest](https://ascii.rest) in miniature.
   Each one is drawn in its own colour gradient.
 - **It hops.** Before each jump it crouches, it stretches in the air and squashes on landing.
   Its shadow on the floor shrinks while it's in the air.
-- **Click** to hop to the next animation. **Right-click** (or the 🐾 menu bar icon) opens the menu:
-  pick an animation, auto-switch (off / 30 s / 1 min / 5 min), size (96 / 128 / 176 pt),
-  backdrop (none / dark / light), hopping, launch at login.
+- **Click** to hop to the next animation. **Press and hold** (or just drag) to pick it up and carry it
+  anywhere, another display included, so it never sits on a button you need. It remembers the spot.
+- **Right-click** (or the 🐾 menu bar icon) opens the menu: pick an animation, auto-switch
+  (off / 30 s / 1 min / 5 min), size (96 / 128 / 176 pt), back to the corner, backdrop
+  (none / dark / light), hopping, launch at login.
 - **Stays out of the way.** It floats above other windows on every Space, has no Dock icon,
   passes clicks through its transparent area and pauses when the screen sleeps.
 - **Light on resources:** about 1–4% of one CPU core for most animations and ~20 MB of memory
