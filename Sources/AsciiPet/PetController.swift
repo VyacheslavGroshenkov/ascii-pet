@@ -186,7 +186,8 @@ final class PetController: NSObject {
             let cycle = settings.cycle
             if cycle != .off, now - shownSince >= Double(cycle.rawValue) {
                 jump(swapTo: (pieceIndex + 1) % Pieces.all.count)
-            } else if settings.hops, now >= nextIdleHopAt {
+            } else if settings.hops, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion, now >= nextIdleHopAt {
+                // При «Уменьшить движение» сам не прыгает; по клику — по-прежнему.
                 // Иногда — двойной прыжок.
                 extraHops = Double.random(in: 0..<1) < 0.3 ? 1 : 0
                 jump()
@@ -359,7 +360,8 @@ final class PetController: NSObject {
 
     private func layoutWindow() {
         let size = NSSize(width: box + pad * 2, height: floorY + box + maxHop + pad * 2)
-        anchor = clamped(settings.anchor ?? cornerAnchor())
+        // Пока питомца несут, место задаёт курсор, а не сохранённая точка.
+        if case .carried = grab { anchor = clamped(anchor) } else { anchor = clamped(settings.anchor ?? cornerAnchor()) }
         window.setFrame(NSRect(origin: windowOrigin(size), size: size), display: false)
         view.frame = NSRect(origin: .zero, size: size)
         backingChanged()
@@ -390,9 +392,10 @@ final class PetController: NSObject {
     }
 
     /// Питомец целиком в видимой области экрана, на котором стоит: не под Dock и не за краем.
-    /// Если такого экрана больше нет (отключили монитор) — на основном.
+    /// Точка вне экранов (щель между мониторами, отключённый монитор) прижимается к ближайшему.
     private func clamped(_ p: CGPoint) -> CGPoint {
-        let screen = NSScreen.screens.first { $0.frame.contains(p) } ?? NSScreen.screens.first
+        let distance = { (f: CGRect) in hypot(max(f.minX - p.x, 0, p.x - f.maxX), max(f.minY - p.y, 0, p.y - f.maxY)) }
+        let screen = NSScreen.screens.min { distance($0.frame) < distance($1.frame) }
         guard let area = screen?.visibleFrame else { return p }
         return CGPoint(x: min(max(p.x, area.minX + box), area.maxX),
                        y: min(max(p.y, area.minY), area.maxY - box))
@@ -557,6 +560,8 @@ final class PetController: NSObject {
     }
 
     private func showContextMenu(_ event: NSEvent) {
+        // Правый клик посреди переноса: ставим питомца там, где он сейчас, а не бросаем.
+        if case .carried = grab { release(inside: false) }
         grab = .none
         let menu = NSMenu()
         populate(menu)
