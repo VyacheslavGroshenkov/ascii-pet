@@ -66,9 +66,9 @@ Without `--install` it only builds into `build/`.
 |---|---|
 | Click the pet | It hops and turns into the next animation in mid-air |
 | Press and hold (or just drag) | It lifts off. Carry it anywhere, and it stays there next time |
-| Right-click it, or click the paw icon in the menu bar | Menu: animation, auto-switch (off / 30 s / 1 min / 5 min), size (96 / 128 / 176 pt), back to the corner, backdrop (none / dark / light), hopping, launch at login |
+| Right-click it, or click the paw icon in the menu bar | Menu: animation, auto-switch (off / 30 s / 1 min / 5 min), size (96 / 128 / 176 pt), back to the corner, backdrop (none / dark / light), hopping, launch at login, language |
 
-The menu is in Russian for now.
+The menu speaks English, Русский and 中文: pick one under **Language**. English is the default.
 
 ## Animations
 
@@ -117,8 +117,16 @@ Memory stays around 20 MB. macOS runs light periodic work like this on the effic
 
 ## Adding animations
 
-The menu is built from `Resources/pieces.json`: one entry per animation with its `id`, menu title and gradient
-colours (`top`, `bottom` as `RRGGBB`), in menu order.
+The menu is built from `Resources/pieces.json`: one entry per animation, in menu order, with its `id`, its title
+in each language and its gradient colours (`top`, `bottom` as `RRGGBB`):
+
+```json
+{ "id": "donut", "title": { "en": "Donut", "ru": "Пончик", "zh": "甜甜圈" }, "top": "FFD58A", "bottom": "FF7A45" }
+```
+
+A plain string works as the title too, when it reads the same in every language. A missing translation falls back
+to English. To add a language, add a case to `Language` in `Sources/AsciiPet/L10n.swift` and a translation to each
+line of its table.
 
 **From ascii.rest.** Add an entry with the piece name as `id`, then rebuild. Single-ink pieces (no `palette` in
 their `meta`) fit best.

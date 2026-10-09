@@ -9,7 +9,7 @@ for arg in "$@"; do
   case "$arg" in
     --install) INSTALL=1 ;;
     --public) PUBLIC=1 ;;
-    *) echo "неизвестный флаг: $arg" >&2; exit 2 ;;
+    *) echo "unknown flag: $arg (use --install and/or --public)" >&2; exit 2 ;;
   esac
 done
 
@@ -45,7 +45,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
   <key>CFBundleExecutable</key><string>AsciiPet</string>
   <key>CFBundleIdentifier</key><string>local.asciipet</string>
   <key>CFBundleName</key><string>AsciiPet</string>
-  <key>CFBundleDisplayName</key><string>ASCII-питомец</string>
+  <key>CFBundleDisplayName</key><string>AsciiPet</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
   <key>CFBundleVersion</key><string>$VERSION</string>
@@ -59,7 +59,7 @@ EOF
 # allow-jit: без него JavaScriptCore в приложении работает без JIT — анимации в 15–20 раз медленнее.
 codesign --force --sign - --options runtime --entitlements Resources/AsciiPet.entitlements "$APP"
 codesign --verify --strict "$APP"
-echo "OK: $APP$([ "$WITH_LOCAL" = 1 ] && echo " (с приватными анимациями из local/)")"
+echo "OK: $APP$([ "$WITH_LOCAL" = 1 ] && echo " (with private pieces from local/)")"
 
 if [ "$INSTALL" = 1 ]; then
   mkdir -p "$HOME/Applications"
@@ -67,5 +67,5 @@ if [ "$INSTALL" = 1 ]; then
   rm -rf "$HOME/Applications/AsciiPet.app"
   cp -R "$APP" "$HOME/Applications/"
   open "$HOME/Applications/AsciiPet.app"
-  echo "Установлено: ~/Applications/AsciiPet.app"
+  echo "Installed: ~/Applications/AsciiPet.app"
 fi

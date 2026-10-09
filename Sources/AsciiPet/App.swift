@@ -27,7 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             engine = try PieceEngine(scriptURLs: sets.map(\.script))
         } catch {
             let alert = NSAlert()
-            alert.messageText = "Не удалось загрузить анимации"
+            alert.messageText = L10n.text(.loadFailed, Language.saved)
             alert.informativeText = "\(error)"
             alert.runModal()
             NSApp.terminate(nil)
@@ -38,7 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         self.pet = pet
 
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        item.button?.image = NSImage(systemSymbolName: "pawprint.fill", accessibilityDescription: "ASCII-питомец")
+        item.button?.image = NSImage(systemSymbolName: "pawprint.fill", accessibilityDescription: "AsciiPet")
         let menu = NSMenu()
         menu.delegate = self
         item.menu = menu

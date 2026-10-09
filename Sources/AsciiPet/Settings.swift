@@ -5,11 +5,11 @@ enum PetSize: Int, CaseIterable {
     case medium = 128
     case large = 176
 
-    var title: String {
+    var title: L10n.Key {
         switch self {
-        case .small: "Маленький"
-        case .medium: "Средний"
-        case .large: "Большой"
+        case .small: .small
+        case .medium: .medium
+        case .large: .large
         }
     }
 }
@@ -17,11 +17,11 @@ enum PetSize: Int, CaseIterable {
 enum Backdrop: String, CaseIterable {
     case clear, dark, light
 
-    var title: String {
+    var title: L10n.Key {
         switch self {
-        case .dark: "Тёмный"
-        case .light: "Светлый"
-        case .clear: "Без фона"
+        case .clear: .noBackdrop
+        case .dark: .dark
+        case .light: .light
         }
     }
 }
@@ -33,12 +33,12 @@ enum Cycle: Int, CaseIterable {
     case m1 = 60
     case m5 = 300
 
-    var title: String {
+    var title: L10n.Key {
         switch self {
-        case .off: "Не менять"
-        case .s30: "Каждые 30 секунд"
-        case .m1: "Каждую минуту"
-        case .m5: "Каждые 5 минут"
+        case .off: .switchOff
+        case .s30: .every30s
+        case .m1: .everyMinute
+        case .m5: .every5m
         }
     }
 }
@@ -49,7 +49,7 @@ struct Settings {
 
     init() {
         defaults.register(defaults: [
-            "piece": Pieces.all[0].id,
+            "piece": Pieces.all.first?.id ?? "",
             "size": PetSize.medium.rawValue,
             "backdrop": Backdrop.clear.rawValue,
             "cycle": Cycle.m1.rawValue,
@@ -58,8 +58,13 @@ struct Settings {
     }
 
     var piece: String {
-        get { defaults.string(forKey: "piece") ?? Pieces.all[0].id }
+        get { defaults.string(forKey: "piece") ?? "" }
         nonmutating set { defaults.set(newValue, forKey: "piece") }
+    }
+
+    var language: Language {
+        get { Language.saved }
+        nonmutating set { defaults.set(newValue.rawValue, forKey: "language") }
     }
 
     var size: PetSize {

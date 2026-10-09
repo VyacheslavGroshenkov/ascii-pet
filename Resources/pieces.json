@@ -1,13 +1,13 @@
 [
-  { "id": "catgirl", "title": "Кошкодевочка", "top": "FFC2E0", "bottom": "B57CFF" },
-  { "id": "donut", "title": "Пончик", "top": "FFD58A", "bottom": "FF7A45" },
-  { "id": "heart", "title": "Сердце", "top": "FFB3C7", "bottom": "FF3D6E" },
-  { "id": "jellyfish", "title": "Медуза", "top": "C7A6FF", "bottom": "5CE1FF" },
-  { "id": "campfire", "title": "Костёр", "top": "FFE27A", "bottom": "FF4D2E" },
-  { "id": "galaxy", "title": "Галактика", "top": "F2B8FF", "bottom": "7A8CFF" },
-  { "id": "earth", "title": "Земля", "top": "8BF5C9", "bottom": "3BA7FF" },
-  { "id": "black-hole", "title": "Чёрная дыра", "top": "FFE9A8", "bottom": "FF8A3D" },
-  { "id": "torus-knot", "title": "Узел", "top": "9CFFE0", "bottom": "D07BFF" },
-  { "id": "butterfly", "title": "Бабочка", "top": "FFF09A", "bottom": "FF8FD1" },
-  { "id": "cat", "title": "Спящий кот", "top": "FFF3E3", "bottom": "FFB877" }
+  { "id": "catgirl", "title": { "en": "Cat Girl", "ru": "Кошкодевочка", "zh": "猫娘" }, "top": "FFC2E0", "bottom": "B57CFF" },
+  { "id": "donut", "title": { "en": "Donut", "ru": "Пончик", "zh": "甜甜圈" }, "top": "FFD58A", "bottom": "FF7A45" },
+  { "id": "heart", "title": { "en": "Heart", "ru": "Сердце", "zh": "爱心" }, "top": "FFB3C7", "bottom": "FF3D6E" },
+  { "id": "jellyfish", "title": { "en": "Jellyfish", "ru": "Медуза", "zh": "水母" }, "top": "C7A6FF", "bottom": "5CE1FF" },
+  { "id": "campfire", "title": { "en": "Campfire", "ru": "Костёр", "zh": "篝火" }, "top": "FFE27A", "bottom": "FF4D2E" },
+  { "id": "galaxy", "title": { "en": "Galaxy", "ru": "Галактика", "zh": "星系" }, "top": "F2B8FF", "bottom": "7A8CFF" },
+  { "id": "earth", "title": { "en": "Earth", "ru": "Земля", "zh": "地球" }, "top": "8BF5C9", "bottom": "3BA7FF" },
+  { "id": "black-hole", "title": { "en": "Black Hole", "ru": "Чёрная дыра", "zh": "黑洞" }, "top": "FFE9A8", "bottom": "FF8A3D" },
+  { "id": "torus-knot", "title": { "en": "Torus Knot", "ru": "Узел", "zh": "环面纽结" }, "top": "9CFFE0", "bottom": "D07BFF" },
+  { "id": "butterfly", "title": { "en": "Butterfly", "ru": "Бабочка", "zh": "蝴蝶" }, "top": "FFF09A", "bottom": "FF8FD1" },
+  { "id": "cat", "title": { "en": "Sleeping Cat", "ru": "Спящий кот", "zh": "睡猫" }, "top": "FFF3E3", "bottom": "FFB877" }
 ]

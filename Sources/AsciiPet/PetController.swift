@@ -499,49 +499,58 @@ final class PetController: NSObject {
     func populate(_ menu: NSMenu) {
         menu.removeAllItems()
         menu.autoenablesItems = false
+        let lang = settings.language
+        let t = { (key: L10n.Key) in L10n.text(key, lang) }
 
-        let current = NSMenuItem(title: Pieces.all[pieceIndex].title, action: nil, keyEquivalent: "")
+        let current = NSMenuItem(title: Pieces.all[pieceIndex].title(lang), action: nil, keyEquivalent: "")
         current.isEnabled = false
         menu.addItem(current)
-        menu.addItem(item("Следующая анимация", #selector(nextAction)))
+        menu.addItem(item(t(.nextAnimation), #selector(nextAction)))
 
         let pieces = NSMenu()
         for (i, style) in Pieces.all.enumerated() {
-            pieces.addItem(item(style.title, #selector(pickPiece(_:)), tag: i, on: i == pieceIndex))
+            pieces.addItem(item(style.title(lang), #selector(pickPiece(_:)), tag: i, on: i == pieceIndex))
         }
-        menu.addItem(submenu("Анимация", pieces))
+        menu.addItem(submenu(t(.animation), pieces))
         menu.addItem(.separator())
 
         let cycles = NSMenu()
         for cycle in Cycle.allCases {
-            cycles.addItem(item(cycle.title, #selector(pickCycle(_:)), tag: cycle.rawValue, on: cycle == settings.cycle))
+            cycles.addItem(item(t(cycle.title), #selector(pickCycle(_:)), tag: cycle.rawValue, on: cycle == settings.cycle))
         }
-        menu.addItem(submenu("Смена анимаций", cycles))
+        menu.addItem(submenu(t(.autoSwitch), cycles))
 
         let sizes = NSMenu()
         for size in PetSize.allCases {
-            sizes.addItem(item(size.title, #selector(pickSize(_:)), tag: size.rawValue, on: size == settings.size))
+            sizes.addItem(item(t(size.title), #selector(pickSize(_:)), tag: size.rawValue, on: size == settings.size))
         }
-        menu.addItem(submenu("Размер", sizes))
-        let corner = item("Вернуть в угол", #selector(backToCorner))
+        menu.addItem(submenu(t(.size), sizes))
+        let corner = item(t(.backToCorner), #selector(backToCorner))
         // Переставить — зажать питомца мышью и перенести; вернуть можно отсюда.
         corner.isEnabled = settings.anchor != nil
         menu.addItem(corner)
 
         let backdrops = NSMenu()
         for (i, backdrop) in Backdrop.allCases.enumerated() {
-            backdrops.addItem(item(backdrop.title, #selector(pickBackdrop(_:)), tag: i, on: backdrop == settings.backdrop))
+            backdrops.addItem(item(t(backdrop.title), #selector(pickBackdrop(_:)), tag: i, on: backdrop == settings.backdrop))
         }
-        menu.addItem(submenu("Фон", backdrops))
+        menu.addItem(submenu(t(.backdrop), backdrops))
 
-        menu.addItem(item("Подпрыгивать", #selector(toggleHops), on: settings.hops))
-        let login = item("Запускать при входе", #selector(toggleLogin), on: SMAppService.mainApp.status == .enabled)
+        menu.addItem(item(t(.hops), #selector(toggleHops), on: settings.hops))
+        let login = item(t(.launchAtLogin), #selector(toggleLogin), on: SMAppService.mainApp.status == .enabled)
         // Регистрация входа работает только у собранного .app.
         login.isEnabled = Bundle.main.bundleURL.pathExtension == "app"
         menu.addItem(login)
+
+        // Названия языков — на самих языках, поэтому этот пункт найдётся при любом текущем.
+        let languages = NSMenu()
+        for (i, language) in Language.allCases.enumerated() {
+            languages.addItem(item(language.name, #selector(pickLanguage(_:)), tag: i, on: language == lang))
+        }
+        menu.addItem(submenu(t(.language), languages))
         menu.addItem(.separator())
-        menu.addItem(item("Анимации: ascii.rest ↗", #selector(openSource)))
-        let quit = NSMenuItem(title: "Выйти", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(item(t(.source), #selector(openSource)))
+        let quit = NSMenuItem(title: t(.quit), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.addItem(quit)
     }
 
@@ -592,6 +601,10 @@ final class PetController: NSObject {
     @objc private func pickBackdrop(_ sender: NSMenuItem) {
         settings.backdrop = Backdrop.allCases[sender.tag]
         applyBackdrop()
+    }
+
+    @objc private func pickLanguage(_ sender: NSMenuItem) {
+        settings.language = Language.allCases[sender.tag]
     }
 
     @objc private func backToCorner() {

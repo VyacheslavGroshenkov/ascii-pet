@@ -4,7 +4,8 @@ import AppKit
 /// `id` — имя модуля в бандле анимаций.
 struct PieceStyle: Decodable {
     let id: String
-    let title: String
+    /// Название по языкам. В JSON — {"en": …, "ru": …, "zh": …} или одна строка на все языки.
+    let titles: [String: String]
     let top: NSColor
     let bottom: NSColor
 
@@ -13,16 +14,25 @@ struct PieceStyle: Decodable {
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
-        title = try c.decode(String.self, forKey: .title)
+        if let one = try? c.decode(String.self, forKey: .title) {
+            titles = ["en": one]
+        } else {
+            titles = try c.decode([String: String].self, forKey: .title)
+        }
         top = try Self.color(c, .top)
         bottom = try Self.color(c, .bottom)
+    }
+
+    /// Название на `language`; если перевода нет — английское, если нет и его — любое.
+    func title(_ language: Language) -> String {
+        titles[language.rawValue] ?? titles["en"] ?? titles.values.first ?? id
     }
 
     /// Цвет в JSON — "RRGGBB".
     private static func color(_ c: KeyedDecodingContainer<CodingKeys>, _ key: CodingKeys) throws -> NSColor {
         let hex = try c.decode(String.self, forKey: key)
         guard hex.count == 6, let v = UInt32(hex, radix: 16) else {
-            throw DecodingError.dataCorruptedError(forKey: key, in: c, debugDescription: "ожидается RRGGBB, получено \(hex)")
+            throw DecodingError.dataCorruptedError(forKey: key, in: c, debugDescription: "expected RRGGBB, got \(hex)")
         }
         return NSColor(srgbRed: CGFloat((v >> 16) & 0xFF) / 255,
                        green: CGFloat((v >> 8) & 0xFF) / 255,
