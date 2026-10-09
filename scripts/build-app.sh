@@ -31,7 +31,7 @@ BIN="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)/AsciiP
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/AsciiPet"
-cp Resources/pieces.js Resources/pieces.json Resources/ascii.rest-LICENSE.txt "$APP/Contents/Resources/"
+cp Resources/pieces.js Resources/pieces.json Resources/ascii.rest-LICENSE.txt Resources/AppIcon.icns "$APP/Contents/Resources/"
 if [ "$WITH_LOCAL" = 1 ]; then
   cp local/pieces.js "$APP/Contents/Resources/local-pieces.js"
   cp local/pieces.json "$APP/Contents/Resources/local-pieces.json"
@@ -43,6 +43,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
 <plist version="1.0">
 <dict>
   <key>CFBundleExecutable</key><string>AsciiPet</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundleIdentifier</key><string>local.asciipet</string>
   <key>CFBundleName</key><string>AsciiPet</string>
   <key>CFBundleDisplayName</key><string>AsciiPet</string>
