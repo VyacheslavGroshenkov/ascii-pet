@@ -1,0 +1,13 @@
+[
+  { "id": "catgirl", "title": "Кошкодевочка", "top": "FFC2E0", "bottom": "B57CFF" },
+  { "id": "donut", "title": "Пончик", "top": "FFD58A", "bottom": "FF7A45" },
+  { "id": "heart", "title": "Сердце", "top": "FFB3C7", "bottom": "FF3D6E" },
+  { "id": "jellyfish", "title": "Медуза", "top": "C7A6FF", "bottom": "5CE1FF" },
+  { "id": "campfire", "title": "Костёр", "top": "FFE27A", "bottom": "FF4D2E" },
+  { "id": "galaxy", "title": "Галактика", "top": "F2B8FF", "bottom": "7A8CFF" },
+  { "id": "earth", "title": "Земля", "top": "8BF5C9", "bottom": "3BA7FF" },
+  { "id": "black-hole", "title": "Чёрная дыра", "top": "FFE9A8", "bottom": "FF8A3D" },
+  { "id": "torus-knot", "title": "Узел", "top": "9CFFE0", "bottom": "D07BFF" },
+  { "id": "butterfly", "title": "Бабочка", "top": "FFF09A", "bottom": "FF8FD1" },
+  { "id": "cat", "title": "Спящий кот", "top": "FFF3E3", "bottom": "FFB877" }
+]
